@@ -147,9 +147,9 @@ export function computeAllScores(data) {
 
 // ─── Health Label ─────────────────────────────────────────────────────────────
 export function healthLabel(score) {
-  if (score >= 80) return { label: 'Healthy',  color: '#10B981', bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' };
-  if (score >= 60) return { label: 'Moderate', color: '#F59E0B', bg: 'bg-amber-500/10',   text: 'text-amber-400',   border: 'border-amber-500/30' };
-  return              { label: 'At Risk',  color: '#F43F5E', bg: 'bg-rose-500/10',    text: 'text-rose-400',    border: 'border-rose-500/30' };
+  if (score >= 80) return { label: 'Healthy',  tone: 'good',     color: '#1f6b3a', soft: '#e3f1e6', text: 'text-good',     bg: 'bg-good-soft',     border: 'border-good/40' };
+  if (score >= 60) return { label: 'Moderate', tone: 'warn',     color: '#7a5600', soft: '#fbf0d4', text: 'text-warn',     bg: 'bg-warn-soft',     border: 'border-warn/40' };
+  return              { label: 'At risk',  tone: 'critical', color: '#b3261e', soft: '#fbe9e6', text: 'text-critical', bg: 'bg-critical-soft', border: 'border-critical/40' };
 }
 
 // ─── Diagnostic Narratives ────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ export function generateNarratives(scores) {
     pipeline: pipeline.score >= 80
       ? `Your pipeline is performing at or above best-in-class benchmarks with strong conversion rates and efficient velocity. Continue monitoring coverage ratio to sustain momentum.`
       : pipeline.score >= 60
-      ? `Pipeline health is moderate — conversion rates show promise but there's meaningful leakage between stages. Focus on the ${
+      ? `Pipeline health is moderate. Conversion rates show promise but there's meaningful leakage between stages. Focus on the ${
           pipeline.breakdown.opportunityToClosedWon < 55 ? 'Opportunity → Closed Won' : 'SQL → Opportunity'
         } stage, where the biggest gap versus benchmark exists.`
       : `Pipeline health requires immediate attention. Low coverage ratio (${pipeline.score < 50 ? 'below 2x' : 'approaching minimum thresholds'}) and weak stage conversions are putting revenue targets at risk this quarter.`,
@@ -169,18 +169,18 @@ export function generateNarratives(scores) {
       ? `Forecasting accuracy is strong and systematic bias is minimal. Your forecast process is a competitive advantage for resource allocation and investor confidence.`
       : forecasting.score >= 60
       ? `Forecasting shows moderate reliability but systematic ${forecasting.avgBias > 0 ? 'over-forecasting' : 'under-forecasting'} bias of ~${Math.abs(Math.round(forecasting.avgBias * 100))}% suggests methodological gaps. Review pipeline stage weighting and rep self-reporting accuracy.`
-      : `Forecasting accuracy is significantly below benchmark, with ${Math.abs(Math.round(forecasting.avgBias * 100))}% average ${forecasting.avgBias > 0 ? 'over-forecast' : 'under-forecast'} bias. This directly impacts board credibility and operational planning — improving forecast methodology should be an immediate priority.`,
+      : `Forecasting accuracy is significantly below benchmark, with ${Math.abs(Math.round(forecasting.avgBias * 100))}% average ${forecasting.avgBias > 0 ? 'over-forecast' : 'under-forecast'} bias. This directly impacts board credibility and operational planning, so improving forecast methodology should be an immediate priority.`,
 
     unitEcon: unitEcon.score >= 80
       ? `Unit economics are excellent. Your LTV:CAC ratio and payback period indicate a highly efficient, scalable go-to-market motion that supports aggressive growth investment.`
       : unitEcon.score >= 60
-      ? `Unit economics are healthy but have room to improve. ${unitEcon.ltvCac < 3 ? 'LTV:CAC ratio is below the 3:1 benchmark — focus on expansion revenue and churn reduction.' : 'CAC payback period exceeds best-in-class — improving sales efficiency can accelerate path to profitability.'}`
+      ? `Unit economics are healthy but have room to improve. ${unitEcon.ltvCac < 3 ? 'LTV:CAC ratio is below the 3:1 benchmark. Focus on expansion revenue and churn reduction.' : 'CAC payback period exceeds best-in-class. Improving sales efficiency can accelerate path to profitability.'}`
       : `Unit economics are under pressure. ${unitEcon.breakdown.grossChurn < 40 ? 'Elevated gross churn is eroding LTV and inflating effective CAC.' : 'High CAC relative to LTV signals go-to-market inefficiency.'} Address churn and expansion motion before scaling acquisition spend.`,
 
     funnel: funnel.score >= 80
       ? `Funnel efficiency is best-in-class. Your win rate and sales cycle are benchmarking above peers, indicating strong product-market fit and a well-trained sales team.`
       : funnel.score >= 60
-      ? `Funnel efficiency is moderate. Win rate and lead-to-close are near benchmark but ${funnel.breakdown.salesCycle < 55 ? 'sales cycle length is dragging overall efficiency — tighten your qualification criteria to reduce time spent on low-probability deals.' : 'leads-per-rep may be constraining throughput — review territory design and SDR capacity.'}`
+      ? `Funnel efficiency is moderate. Win rate and lead-to-close are near benchmark but ${funnel.breakdown.salesCycle < 55 ? 'sales cycle length is dragging overall efficiency. Tighten your qualification criteria to reduce time spent on low-probability deals.' : 'leads-per-rep may be constraining throughput. Review territory design and SDR capacity.'}`
       : `Funnel efficiency is materially below benchmark. Low lead-to-close and win rates suggest qualification gaps or competitive positioning issues. Prioritize sales process audit and ICP refinement to recover revenue velocity.`,
   };
 }

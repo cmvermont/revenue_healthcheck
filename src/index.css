@@ -1,0 +1,159 @@
+@import "tailwindcss";
+@import "@fontsource-variable/figtree";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+/* Tokens match the Pricing Workbench and mongeon.co: Figtree, near-white page, charcoal type, teal accent. */
+:root {
+  color-scheme: light;
+  --paper: #fafafa;
+  --sheet: #ffffff;
+  --ink: #1a1d1e;
+  --ink-2: #55595c;
+  --ink-3: #6e7275;
+  --rule: #d0d0cd;
+  --rule-soft: #e4e4e2;
+  --accent: #0c7d72;
+  --accent-strong: #0a665d;
+  --accent-soft: #e6f5f3;
+  --critical: #b3261e;
+  --critical-soft: #fbe9e6;
+  --good: #1f6b3a;
+  --good-soft: #e3f1e6;
+  --warn: #7a5600;
+  --warn-soft: #fbf0d4;
+  /* Inputs follow the spreadsheet convention: blue is something you can type into, black is calculated. */
+  --input-bg: #eef4fc;
+  --input-ink: #1b4f9c;
+  --input-rule: #a9c3e6;
+  --ruled: #dfe9f0;
+  --head-rule: #9db6c9;
+  --margin-line: rgb(214 84 84 / 0.4);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-sheet: var(--sheet);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-rule-soft: var(--rule-soft);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-critical: var(--critical);
+  --color-critical-soft: var(--critical-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  background-color: var(--sheet);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-head {
+  padding-bottom: 2rem;
+}
+
+/* College-ruled notebook paper below the page head, the same sheet the Pricing Workbench uses. */
+.ruled {
+  position: relative;
+  padding-top: 2rem;
+}
+.ruled::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: -200vh;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  border-top: 2px solid var(--head-rule);
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--ruled) 1px, transparent 1px);
+  background-size: 100% 32px;
+  background-position: 0 30px;
+  pointer-events: none;
+}
+
+@media (min-width: 1280px) {
+  body::after {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    top: 0;
+    bottom: 0;
+    left: calc(50% - 38.5rem);
+    width: 1.5px;
+    background: var(--margin-line);
+    pointer-events: none;
+  }
+}
+
+main {
+  overflow-y: clip;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.15;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.field-input {
+  background: var(--input-bg);
+  color: var(--input-ink);
+  border: 1px solid var(--input-rule);
+  border-bottom: 2px solid var(--accent);
+  border-radius: 4px 4px 0 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.field-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.field-input::placeholder {
+  color: var(--ink-3);
+}
+
+.recharts-wrapper *:focus {
+  outline: none;
+}
+
+.score-arc {
+  transition: stroke-dashoffset 0.8s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .score-arc {
+    transition: none;
+  }
+}
