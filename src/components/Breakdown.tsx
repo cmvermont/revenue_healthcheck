@@ -1,7 +1,8 @@
 "use client";
 
 import { fmt } from "@/lib/format";
-import { healthOfValue, METRICS, type ModuleResult } from "@/lib/engine";
+import Link from "next/link";
+import { BASIS_LABEL, healthOfValue, METRICS, RANGE_SOURCES, SOURCES, type ModuleResult } from "@/lib/engine";
 import { Term } from "./Term";
 import { HealthChip, Sheet } from "./ui";
 
@@ -63,6 +64,22 @@ export function Breakdown({ m }: { m: ModuleResult }) {
           </tr>
         </tfoot>
       </table>
+      <p className="mt-3 text-xs leading-relaxed text-ink-3">
+        Ranges:{" "}
+        {m.parts.map((p, i) => {
+          const r = RANGE_SOURCES[p.id];
+          return (
+            <span key={p.id}>
+              {i > 0 && " · "}
+              {METRICS[p.id].label} from {r.sources.map((s) => SOURCES[s].publisher).join("; ")} ({BASIS_LABEL[r.basis].toLowerCase()})
+            </span>
+          );
+        })}
+        .{" "}
+        <Link href={`/methodology#range-${m.parts[0].id}`} className="text-accent underline underline-offset-4">
+          How each range was set
+        </Link>
+      </p>
     </Sheet>
   );
 }

@@ -20,7 +20,7 @@ const CHECKS = [
   {
     href: "/funnel",
     title: "Funnel efficiency",
-    body: "Win rate, the sales cycle from lead to close, and leads per rep, with revenue per rep worked out from them.",
+    body: "Win rate and the sales cycle from opportunity to close, with deals and revenue per rep worked out from them.",
   },
 ] as const;
 
@@ -32,7 +32,7 @@ export default function Home() {
         <h1 className="mt-3 max-w-4xl text-5xl font-bold leading-[1.02] tracking-tight md:text-6xl">Four scores for the health of a revenue engine.</h1>
         <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-2">
           I built this healthcheck to score a SaaS revenue operation on four checks: pipeline health, forecast accuracy, unit economics, and funnel
-          efficiency. Each check scores its inputs against a benchmark range, shows the arithmetic, and names the weakest input. Start with the
+          efficiency. Each check scores its inputs against published benchmarks, shows the arithmetic, and names the weakest input. Start with the
           example company or enter your own numbers.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
@@ -66,14 +66,13 @@ export default function Home() {
             </p>
           </div>
           <div>
-            <h3 className="text-xl font-bold">The arithmetic is on screen</h3>
+            <h3 className="text-xl font-bold">Every range has a source</h3>
             <p className="mt-2 text-sm leading-relaxed text-ink-2">
-              Each check lists every input&apos;s score, weight, and points, and each worked figure shows its formula. Automated tests hold the formulas on
-              screen to the scoring engine. The{" "}
+              Each range comes from a published survey, including Benchmarkit, The Bridge Group, and Ebsta with Pavilion. The{" "}
               <Link href="/methodology" className="text-accent underline underline-offset-4">
                 methodology
               </Link>{" "}
-              covers the rest.
+              names the source for each one and says how any unpublished end was set.
             </p>
           </div>
           <div>

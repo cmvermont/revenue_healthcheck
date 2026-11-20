@@ -8,7 +8,6 @@ export const METRICS: Record<MetricId, { label: string; termId: string; format: 
   sqlToOpp: { label: "SQL → Opp rate", termId: "sqlToOpp", format: "pct1" },
   coverage: { label: "Pipeline coverage", termId: "coverage", format: "x1" },
   forecastAccuracy: { label: "Forecast accuracy", termId: "forecastAccuracy", format: "pct1" },
-  forecastBias: { label: "Forecast bias (size)", termId: "forecastBias", format: "pct1" },
   weightedPipelineAccuracy: { label: "Weighted pipeline accuracy", termId: "weightedPipelineAccuracy", format: "pct1" },
   ltvCac: { label: "LTV to CAC", termId: "ltvCac", format: "x2" },
   paybackMonths: { label: "CAC payback", termId: "payback", format: "months" },
@@ -16,5 +15,4 @@ export const METRICS: Record<MetricId, { label: string; termId: string; format: 
   nrr: { label: "Net revenue retention", termId: "nrr", format: "pct1" },
   winRate: { label: "Win rate", termId: "winRate", format: "pct1" },
   salesCycle: { label: "Sales cycle", termId: "salesCycle", format: "days" },
-  leadsPerRep: { label: "Leads per rep", termId: "leadsPerRep", format: "int" },
 };

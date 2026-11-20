@@ -68,7 +68,10 @@ describe("the model's structure", () => {
 describe("derived values come from one copy of each input", () => {
   const x = E.EXAMPLE;
   it("win rate is the Opp → Won stage rate", () => expect(E.winRate(x)).toBe(x.conversion.oppToWon));
-  it("the sales cycle is the four stage days added", () => expect(E.salesCycle(x)).toBe(73));
+  it("the sales cycle is the Opp → Won stage days, and lead-to-close days add all four", () => {
+    expect(E.salesCycle(x)).toBe(84);
+    expect(E.leadToCloseDays(x)).toBe(122);
+  });
   it("lead-to-close is the four stage rates multiplied, and matches the funnel's last count", () => {
     expect(E.leadToClose(x)).toBeCloseTo(0.35 * 0.42 * 0.55 * 0.22, 12);
     expect(E.funnelCounts(x, 1000)[4] / 1000).toBeCloseTo(E.leadToClose(x), 12);
@@ -101,17 +104,16 @@ describe("forecast arithmetic", () => {
 describe("the example company", () => {
   const r = E.score(E.EXAMPLE);
   // Pinned so that a change to the method shows up here first and is made on purpose.
-  it("scores 65, 70, 66, and 60 by check, 66 overall", () => {
-    expect([r.modules.pipeline.score, r.modules.forecast.score, r.modules.unitEconomics.score, r.modules.funnel.score]).toEqual([65, 70, 66, 60]);
-    expect(r.overall).toBe(66);
+  it("scores 64, 80, 69, and 71 by check, 71 overall", () => {
+    expect([r.modules.pipeline.score, r.modules.forecast.score, r.modules.unitEconomics.score, r.modules.funnel.score]).toEqual([64, 80, 69, 71]);
+    expect(r.overall).toBe(71);
   });
   it("each check score is its parts' points added and rounded", () => {
     for (const m of Object.values(r.modules)) expect(m.score).toBe(Math.round(m.parts.reduce((a, p) => a + p.points, 0)));
   });
-  it("lists checks from weakest to strongest", () => expect(E.weakestFirst(r)).toEqual(["funnel", "pipeline", "unitEconomics", "forecast"]));
+  it("lists checks from weakest to strongest", () => expect(E.weakestFirst(r)).toEqual(["pipeline", "unitEconomics", "funnel", "forecast"]));
   it("matches the worked examples quoted in the glossary", () => {
-    expect(r.modules.pipeline.parts.find((p) => p.id === "coverage")!.score).toBeCloseTo(54.7, 1);
-    expect(r.modules.pipeline.parts.map((p) => +p.score.toFixed(1))).toEqual([73.3, 64, 70, 54.7]);
+    expect(r.modules.pipeline.parts.map((p) => +p.score.toFixed(1))).toEqual([48.3, 66.2, 84.8, 54.7]);
     expect(E.averageAccuracy(E.EXAMPLE)).toBeCloseTo(0.895, 3);
     expect(E.averageBias(E.EXAMPLE)).toBeCloseTo(0.089, 3);
     expect(E.closedQuarters(E.EXAMPLE).filter((q) => q.bias > 0)).toHaveLength(4);
@@ -128,10 +130,10 @@ describe("health labels", () => {
   });
   it("calls an input healthy at its good value and at risk past poor, in both directions", () => {
     const b = E.BENCHMARKS.grossChurn;
-    expect(E.healthOfValue(0.08, b, true)).toBe("good");
-    expect(E.healthOfValue(0.1, b, true)).toBe("warn");
-    expect(E.healthOfValue(0.2, b, true)).toBe("critical");
-    expect(E.healthOfValue(0.3, E.BENCHMARKS.leadToMql)).toBe("good");
+    expect(E.healthOfValue(0.16, b, true)).toBe("good");
+    expect(E.healthOfValue(0.2, b, true)).toBe("warn");
+    expect(E.healthOfValue(0.3, b, true)).toBe("critical");
+    expect(E.healthOfValue(0.41, E.BENCHMARKS.leadToMql)).toBe("good");
     expect(E.healthOfValue(0.1, E.BENCHMARKS.leadToMql)).toBe("critical");
   });
   it("agrees with the input score: healthy means a score of at least 60", () => {
@@ -147,11 +149,11 @@ describe("health labels", () => {
 describe("diagnosis", () => {
   it("names the weakest input, its value, and its good threshold", () => {
     const r = E.score(E.EXAMPLE);
-    expect(E.diagnose(r.modules.pipeline, E.EXAMPLE)).toContain("The weakest is pipeline coverage at 2.8x, against 3.0x.");
-    expect(E.diagnose(r.modules.funnel, E.EXAMPLE)).toContain("win rate at 22.0%");
+    expect(E.diagnose(r.modules.pipeline, E.EXAMPLE)).toContain("The weakest is lead → MQL rate at 35.0%, against 41.0%.");
+    expect(E.diagnose(r.modules.unitEconomics, E.EXAMPLE)).toContain("LTV to CAC at 3.62x, against 4.10x");
   });
   it("says so when every input clears its good threshold", () => {
-    expect(E.diagnose(E.score(E.EXAMPLE).modules.unitEconomics, E.EXAMPLE)).toMatch(/^Every input clears its good threshold/);
+    expect(E.diagnose(E.score(E.EXAMPLE).modules.funnel, E.EXAMPLE)).toMatch(/^Every input clears its good threshold/);
   });
   it("counts the quarters that ran in the direction of the bias", () => {
     const x = clone(E.EXAMPLE);
@@ -159,11 +161,49 @@ describe("diagnosis", () => {
     const text = E.diagnose(E.score(x).modules.forecast, x);
     expect(text).toContain("ran high in 5 of 5 closed quarters");
   });
-  it("names the slowest stage against its reference when the sales cycle is weakest", () => {
+  it("compares the sales cycle with the published median when it is weakest", () => {
     const x = clone(E.EXAMPLE);
-    x.stageDays.mqlToSql = 60;
+    x.stageDays.oppToWon = 150;
     x.conversion.oppToWon = 0.3;
     const text = E.diagnose(E.score(x).modules.funnel, x);
-    expect(text).toContain("MQL → SQL at 60 days against 8 days");
+    expect(text).toContain("Opportunities take 150 days to close against a published median of 91 days.");
+    expect(text).toContain("late-stage deals stall");
+  });
+});
+
+describe("benchmark sources", () => {
+  it("every scored range names at least one known source", () => {
+    for (const id of Object.keys(E.BENCHMARKS) as E.MetricId[]) {
+      const r = E.RANGE_SOURCES[id];
+      expect(r, id).toBeDefined();
+      expect(r.sources.length, id).toBeGreaterThan(0);
+      for (const s of r.sources) expect(E.SOURCES[s], `${id} -> ${s}`).toBeDefined();
+      expect(r.note.length, id).toBeGreaterThan(20);
+    }
+  });
+  it("holds the published quartiles exactly", () => {
+    expect(E.BENCHMARKS.ltvCac).toEqual({ poor: 1.1, good: 4.1, excellent: 7.8 });
+    expect(E.BENCHMARKS.paybackMonths).toEqual({ poor: 24, good: 16, excellent: 10 });
+    expect(E.BENCHMARKS.nrr).toEqual({ poor: 0.92, good: 1.02, excellent: 1.1 });
+    // Gross revenue retention of 76%, 84%, 91% read as churn.
+    expect(E.BENCHMARKS.grossChurn.poor).toBeCloseTo(1 - 0.76, 10);
+    expect(E.BENCHMARKS.grossChurn.good).toBeCloseTo(1 - 0.84, 10);
+    expect(E.BENCHMARKS.grossChurn.excellent).toBeCloseTo(1 - 0.91, 10);
+  });
+  it("derives the top figures from the published ones", () => {
+    expect(E.BENCHMARKS.winRate.excellent).toBeCloseTo(+(0.19 * 1.43).toFixed(2), 10);
+    expect(E.BENCHMARKS.salesCycle.excellent).toBe(Math.round(91 * 0.58));
+    expect(E.BENCHMARKS.forecastAccuracy.good).toBe(0.75);
+  });
+  it("mirrors an unpublished end around good, and sets average-only ends at half and one and a half times", () => {
+    for (const id of Object.keys(E.BENCHMARKS) as E.MetricId[]) {
+      const b = E.BENCHMARKS[id];
+      const basis = E.RANGE_SOURCES[id].basis;
+      if (basis === "median and top") expect(Math.abs(b.good - b.poor), id).toBeCloseTo(Math.abs(b.excellent - b.good), 10);
+      if (basis === "average") {
+        expect(b.poor, id).toBeCloseTo(b.good * 0.5, 10);
+        expect(b.excellent, id).toBeCloseTo(b.good * 1.5, 10);
+      }
+    }
   });
 });

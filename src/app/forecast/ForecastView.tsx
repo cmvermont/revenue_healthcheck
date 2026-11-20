@@ -8,7 +8,7 @@ import { FormulaRow } from "@/components/FormulaRow";
 import { Term } from "@/components/Term";
 import { CardTitle, Metric, ScoreChip, Sheet, Step, TONE_FILL, TONE_TEXT } from "@/components/ui";
 import { fmt } from "@/lib/format";
-import { averageAccuracy, averageBias, BENCHMARKS, closedQuarters, diagnose, healthOfValue } from "@/lib/engine";
+import { averageAccuracy, averageBias, BENCHMARKS, closedQuarters, diagnose, FORECAST_MISS_LINE, healthOfValue, type Health } from "@/lib/engine";
 
 const TICK = { fill: "#6e7275", fontSize: 12, fontFamily: '"IBM Plex Mono", ui-monospace, monospace' };
 const signed = (v: number) => `${v > 0 ? "+" : ""}${fmt(v, "pct1")}`;
@@ -19,7 +19,8 @@ export function ForecastView() {
   const closed = closedQuarters(data);
   const acc = averageAccuracy(data);
   const bias = averageBias(data);
-  const biasHealth = healthOfValue(Math.abs(bias), BENCHMARKS.forecastBias, true);
+  // Not scored: shown against the line SiriusDecisions uses for a missed forecast.
+  const biasHealth: Health = Math.abs(bias) <= FORECAST_MISS_LINE ? "good" : "warn";
   const high = closed.filter((q) => q.bias > 0).length;
   const RANGE = 0.3;
   const pos = (v: number) => ((Math.max(-RANGE, Math.min(RANGE, v)) + RANGE) / (2 * RANGE)) * 100;
@@ -46,7 +47,7 @@ export function ForecastView() {
               label={<Term id="forecastBias" />}
               value={Number.isFinite(bias) ? signed(bias) : "–"}
               health={biasHealth}
-              note={Number.isFinite(bias) ? `${bias > 0 ? "Above" : "Below"} actual on average · good within ±${fmt(BENCHMARKS.forecastBias.good, "pct0")}` : "No closed quarters"}
+              note={Number.isFinite(bias) ? `${bias > 0 ? "Above" : "Below"} actual on average · shown, not scored` : "No closed quarters"}
             />
             <Metric
               label={<Term id="weightedPipelineAccuracy" />}
@@ -135,14 +136,14 @@ export function ForecastView() {
           </Sheet>
 
           <Sheet>
-            <CardTitle note={`Within ±${fmt(BENCHMARKS.forecastBias.good, "pct0")} counts as good. Misses high and low cancel, so read it with accuracy.`}>
+            <CardTitle note={`The green band is ±${fmt(FORECAST_MISS_LINE, "pct0")}, the line SiriusDecisions uses for a missed forecast. Misses high and low cancel, so read bias with accuracy. Not scored: no published range was found.`}>
               Bias across quarters
             </CardTitle>
             <div className={`num text-3xl font-bold ${TONE_TEXT[biasHealth]}`}>{Number.isFinite(bias) ? signed(bias) : "–"}</div>
             <div className="relative mt-5 h-3 rounded-full bg-rule-soft" role="img" aria-label={`Bias ${Number.isFinite(bias) ? signed(bias) : "not available"} on a scale from minus 30% to plus 30%`}>
               <div
                 className="absolute inset-y-0 rounded-full bg-good-soft ring-1 ring-good/30"
-                style={{ left: `${pos(-BENCHMARKS.forecastBias.good)}%`, width: `${pos(BENCHMARKS.forecastBias.good) - pos(-BENCHMARKS.forecastBias.good)}%` }}
+                style={{ left: `${pos(-FORECAST_MISS_LINE)}%`, width: `${pos(FORECAST_MISS_LINE) - pos(-FORECAST_MISS_LINE)}%` }}
               />
               <div className="absolute top-0 h-3 w-px bg-ink-3" style={{ left: "50%" }} />
               {Number.isFinite(bias) && (

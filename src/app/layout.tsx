@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "Revenue Healthcheck",
   description:
-    "A revenue operations diagnostic: pipeline health, forecast accuracy, unit economics, and funnel efficiency, each scored against a benchmark range with the arithmetic on screen. Built by Chris Mongeon.",
+    "A revenue operations diagnostic: pipeline health, forecast accuracy, unit economics, and funnel efficiency, each scored against published benchmarks with the arithmetic on screen. Built by Chris Mongeon.",
 };
 
 const nav = [
@@ -46,7 +46,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <a href="https://mongeon.co" className="font-medium text-accent underline underline-offset-4 hover:text-accent-strong">
               Chris Mongeon
             </a>
-            . The example company, its figures, and the benchmark ranges are illustrative.
+            . The example company and its figures are illustrative. Benchmark ranges are published figures, cited on the{" "}
+            <Link href="/methodology" className="underline underline-offset-4 hover:text-accent">
+              methodology
+            </Link>{" "}
+            page.
           </footer>
           <ClickFeedback />
         </DataProvider>

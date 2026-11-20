@@ -7,13 +7,13 @@ import { FormulaRow } from "@/components/FormulaRow";
 import { Term } from "@/components/Term";
 import { CardTitle, Metric, ScoreChip, Sheet, Step } from "@/components/ui";
 import { fmt } from "@/lib/format";
-import { dealsPerRep, diagnose, healthOfValue, leadToClose, METRICS, opportunitiesPerRep, slowestStage, STAGE_REFERENCE_DAYS, STAGES } from "@/lib/engine";
+import { BENCHMARKS, dealsPerRep, diagnose, healthOfValue, leadToClose, METRICS, opportunitiesPerRep, STAGES } from "@/lib/engine";
 
 export function FunnelView() {
   const { data, result } = useData();
   const m = result.modules.funnel;
-  const slow = slowestStage(data);
-  const maxDays = Math.max(...STAGES.map((s) => Math.max(data.stageDays[s.key], STAGE_REFERENCE_DAYS[s.key]))) * 1.1 || 1;
+  const median = BENCHMARKS.salesCycle.good;
+  const maxDays = Math.max(...STAGES.map((s) => data.stageDays[s.key]), median) * 1.1 || 1;
 
   return (
     <>
@@ -24,7 +24,7 @@ export function FunnelView() {
         </Step>
 
         <Sheet>
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2">
             {m.parts.map((p) => (
               <Metric
                 key={p.id}
@@ -39,34 +39,40 @@ export function FunnelView() {
 
         <div className="grid gap-5 lg:grid-cols-2">
           <Sheet>
-            <CardTitle note={<>The black tick is each stage&apos;s <Term id="referenceDays" label="reference days" />. The slowest stage against its reference is shown in amber.</>}>
+            <CardTitle
+              note={
+                <>
+                  The <Term id="salesCycle" label="sales cycle" /> is the Opp → Won stage, shown in green. The black tick is the published median of{" "}
+                  {fmt(median, "days")}. Earlier stages count toward <Term id="leadToCloseDays" label="lead-to-close days" />, which are not scored.
+                </>
+              }
+            >
               Days in each stage
             </CardTitle>
             <ol className="space-y-3">
               {STAGES.map((s) => {
                 const d = data.stageDays[s.key];
-                const ref = STAGE_REFERENCE_DAYS[s.key];
-                const isSlow = s.key === slow.key && slow.ratio > 1;
+                const scored = s.key === "oppToWon";
                 return (
                   <li key={s.key} className="flex items-center gap-3">
                     <span className="w-24 text-sm text-ink-2">{s.label}</span>
                     <div className="relative h-7 flex-1 rounded-sm bg-rule-soft/60">
                       <div
                         className="flex h-full items-center rounded-sm px-2"
-                        style={{ width: `${Math.max((d / maxDays) * 100, 6)}%`, background: isSlow ? "var(--warn)" : "#2a78d6" }}
+                        style={{ width: `${Math.max((d / maxDays) * 100, 6)}%`, background: scored ? "var(--accent-strong)" : "#2a78d6" }}
                       >
                         <span className="num font-mono text-xs font-medium text-white">{fmt(d, "int")}</span>
                       </div>
-                      <div className="absolute -top-1 h-9 w-0.5 bg-ink" style={{ left: `${(ref / maxDays) * 100}%` }} aria-hidden />
+                      {scored && <div className="absolute -top-1 h-9 w-0.5 bg-ink" style={{ left: `${(median / maxDays) * 100}%` }} aria-hidden />}
                     </div>
-                    <span className="num w-16 text-right text-xs text-ink-3">ref. {ref}</span>
+                    <span className="num w-16 text-right text-xs text-ink-3">{scored ? `median ${median}` : ""}</span>
                   </li>
                 );
               })}
             </ol>
             <div className="mt-4 border-t border-rule-soft pt-3">
               <FormulaRow
-                formula="salesCycle"
+                formula="leadToCloseDays"
                 values={{ ...data.stageDays }}
                 labels={{ leadToMql: "Lead → MQL", mqlToSql: "MQL → SQL", sqlToOpp: "SQL → Opp", oppToWon: "Opp → Won" }}
                 formats={{ leadToMql: "int", mqlToSql: "int", sqlToOpp: "int", oppToWon: "int" }}
@@ -75,7 +81,16 @@ export function FunnelView() {
           </Sheet>
 
           <Sheet>
-            <CardTitle note="One rep's month and year at these rates.">Per rep</CardTitle>
+            <CardTitle
+              note={
+                <>
+                  One rep&apos;s month and year at these rates. <Term id="leadsPerRep" label="Leads per rep" /> is shown, not scored: no published benchmark was
+                  found.
+                </>
+              }
+            >
+              Per rep
+            </CardTitle>
             <div className="grid grid-cols-3 gap-4">
               <Metric label={<Term id="leadsPerRep" label="Leads" />} value={fmt(data.leadsPerRep, "int")} note="each month" />
               <Metric label="Opportunities" value={fmt(opportunitiesPerRep(data), "ratio")} note="each month" />

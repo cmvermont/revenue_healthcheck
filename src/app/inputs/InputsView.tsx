@@ -8,7 +8,7 @@ import { NumberField } from "@/components/NumberField";
 import { Term } from "@/components/Term";
 import { Sheet } from "@/components/ui";
 import { fmt, type Fmt } from "@/lib/format";
-import { leadToClose, ltvCac, salesCycle, STAGES, type Inputs } from "@/lib/engine";
+import { leadToClose, leadToCloseDays, ltvCac, salesCycle, STAGES, type Inputs } from "@/lib/engine";
 
 function Field({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
@@ -94,7 +94,7 @@ export function InputsView() {
           {num("People in sales", x.salesTeamSize, "int", (p, v) => ({ ...p, salesTeamSize: v }))}
         </Group>
 
-        <Group n={1} title="Pipeline" note="Stage rates and stage days for the same four stages. The Opp → Won rate is also the win rate, and the stage days add up to the sales cycle.">
+        <Group n={1} title="Pipeline" note="Stage rates and stage days for the same four stages. The Opp → Won rate is the win rate, and the Opp → Won days are the sales cycle.">
           {STAGES.map((s) => (
             <span key={s.key} className="contents">
               {num(
@@ -116,7 +116,7 @@ export function InputsView() {
           <span className="w-full" />
           {num(<Term id="coverage" />, x.coverage, "x1", (p, v) => ({ ...p, coverage: v }), { min: 0, max: 50 }, "Pipeline coverage")}
           <Derived>
-            Lead-to-close {fmt(leadToClose(x), "pct2")} · sales cycle {fmt(salesCycle(x), "days")}
+            Lead-to-close {fmt(leadToClose(x), "pct2")} · sales cycle {fmt(salesCycle(x), "days")} from opportunity · {fmt(leadToCloseDays(x), "days")} from lead
           </Derived>
         </Group>
 

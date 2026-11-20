@@ -50,7 +50,7 @@ describe("each displayed formula computes what the engine computes", () => {
   const q = E.closedQuarters(x)[0];
   const cases: [string, Record<string, number>, number][] = [
     ["leadToClose", { ...x.conversion }, E.leadToClose(x)],
-    ["salesCycle", { ...x.stageDays }, E.salesCycle(x)],
+    ["leadToCloseDays", { ...x.stageDays }, E.leadToCloseDays(x)],
     ["quarterAccuracy", { forecast: q.forecast, actual: q.actual }, q.accuracy],
     ["quarterBias", { forecast: q.forecast, actual: q.actual }, q.bias],
     ["ltvCac", { ltv: x.ltv, cac: x.cac }, E.ltvCac(x)],

@@ -4,7 +4,7 @@
  *
  * Inputs are stored once. Anything that can be worked out from other inputs is derived here and
  * never typed in a second time: win rate is the opportunity-to-won stage rate, the sales cycle is
- * the sum of the stage days, and lead-to-close is the product of the four stage rates.
+ * the opportunity-to-won stage days, and lead-to-close is the product of the four stage rates.
  */
 
 export type Band = { poor: number; good: number; excellent: number };
@@ -39,28 +39,34 @@ export const STAGES: { key: StageKey; label: string; from: string; to: string }[
 ];
 
 /**
- * Illustrative ranges for a B2B SaaS company selling mid-market annual contracts. They are not drawn
- * from a cited dataset; the methodology page says so, and every score is shown with the range it used.
+ * Benchmark ranges. Each scored input's range comes from a published source, recorded in
+ * sources.ts with how each end was set. Good is the published median or average. Poor and best are
+ * the published quartiles where a source gives them; where it does not, sources.ts says how they
+ * were set, and the methodology page shows it.
  */
 export const BENCHMARKS = {
-  leadToMql: { poor: 0.15, good: 0.3, excellent: 0.45 },
-  mqlToSql: { poor: 0.2, good: 0.4, excellent: 0.6 },
-  sqlToOpp: { poor: 0.3, good: 0.5, excellent: 0.7 },
+  // First Page Sage averages for $10M to $100M ARR companies; ends set at half and one and a half times the average.
+  leadToMql: { poor: 0.205, good: 0.41, excellent: 0.615 },
+  mqlToSql: { poor: 0.195, good: 0.39, excellent: 0.585 },
+  sqlToOpp: { poor: 0.21, good: 0.42, excellent: 0.63 },
+  // No survey distribution found; 3x is the long-standing rule of thumb.
   coverage: { poor: 1.5, good: 3, excellent: 4.5 },
-  forecastAccuracy: { poor: 0.6, good: 0.8, excellent: 0.95 },
-  forecastBias: { poor: 0.3, good: 0.1, excellent: 0.03 },
-  weightedPipelineAccuracy: { poor: 0.6, good: 0.8, excellent: 0.95 },
-  ltvCac: { poor: 1.5, good: 3, excellent: 5 },
-  paybackMonths: { poor: 24, good: 15, excellent: 8 },
-  grossChurn: { poor: 0.15, good: 0.08, excellent: 0.03 },
-  nrr: { poor: 0.9, good: 1.1, excellent: 1.3 },
-  winRate: { poor: 0.15, good: 0.25, excellent: 0.35 },
-  salesCycle: { poor: 120, good: 75, excellent: 40 },
-  leadsPerRep: { poor: 20, good: 40, excellent: 60 },
+  // Gartner: median accuracy 70% to 79%, 7% of organizations reach 90% or higher.
+  forecastAccuracy: { poor: 0.6, good: 0.75, excellent: 0.9 },
+  weightedPipelineAccuracy: { poor: 0.6, good: 0.75, excellent: 0.9 },
+  // Benchmarkit and Aleph, 2026 edition, full-year 2025: 25th percentile, median, 75th percentile.
+  ltvCac: { poor: 1.1, good: 4.1, excellent: 7.8 },
+  paybackMonths: { poor: 24, good: 16, excellent: 10 },
+  grossChurn: { poor: 0.24, good: 0.16, excellent: 0.09 },
+  nrr: { poor: 0.92, good: 1.02, excellent: 1.1 },
+  // Bridge Group 2024 and Ebsta with Pavilion 2025: median 19%, top performers 43% higher.
+  winRate: { poor: 0.11, good: 0.19, excellent: 0.27 },
+  // Ebsta with Pavilion 2025: new business closes in 91 days, top performers 42% faster.
+  salesCycle: { poor: 129, good: 91, excellent: 53 },
 } satisfies Record<string, Band>;
 
-/** Reference days for each stage. Used to name the slowest stage, not scored on their own. */
-export const STAGE_REFERENCE_DAYS: Record<StageKey, number> = { leadToMql: 5, mqlToSql: 8, sqlToOpp: 15, oppToWon: 30 };
+/** SiriusDecisions counts a forecast as missed when it lands more than 10% from the actual. Bias is shown against this line, not scored. */
+export const FORECAST_MISS_LINE = 0.1;
 
 export type MetricId = keyof typeof BENCHMARKS;
 export type ModuleId = "pipeline" | "forecast" | "unitEconomics" | "funnel";
@@ -72,7 +78,6 @@ export const LOWER_IS_BETTER: Record<MetricId, boolean> = {
   sqlToOpp: false,
   coverage: false,
   forecastAccuracy: false,
-  forecastBias: true,
   weightedPipelineAccuracy: false,
   ltvCac: false,
   paybackMonths: true,
@@ -80,13 +85,11 @@ export const LOWER_IS_BETTER: Record<MetricId, boolean> = {
   nrr: false,
   winRate: false,
   salesCycle: true,
-  leadsPerRep: false,
 };
 
 /**
  * The four checks and the share of each check that every input carries. No input is scored in two
- * checks: pipeline health covers the stages up to an opportunity and coverage, funnel efficiency
- * covers how reps turn opportunities into revenue.
+ * checks. Inputs with no published benchmark (forecast bias, leads per rep) are shown, not scored.
  */
 export const MODULES: { id: ModuleId; name: string; weight: number; parts: [MetricId, number][] }[] = [
   {
@@ -105,9 +108,8 @@ export const MODULES: { id: ModuleId; name: string; weight: number; parts: [Metr
     name: "Forecast accuracy",
     weight: 0.25,
     parts: [
-      ["forecastAccuracy", 0.5],
-      ["forecastBias", 0.25],
-      ["weightedPipelineAccuracy", 0.25],
+      ["forecastAccuracy", 0.6],
+      ["weightedPipelineAccuracy", 0.4],
     ],
   },
   {
@@ -126,9 +128,8 @@ export const MODULES: { id: ModuleId; name: string; weight: number; parts: [Metr
     name: "Funnel efficiency",
     weight: 0.2,
     parts: [
-      ["winRate", 0.35],
-      ["salesCycle", 0.35],
-      ["leadsPerRep", 0.3],
+      ["winRate", 0.5],
+      ["salesCycle", 0.5],
     ],
   },
 ];
@@ -137,7 +138,10 @@ export const MODULES: { id: ModuleId; name: string; weight: number; parts: [Metr
 
 export const leadToClose = (x: Inputs) => x.conversion.leadToMql * x.conversion.mqlToSql * x.conversion.sqlToOpp * x.conversion.oppToWon;
 export const winRate = (x: Inputs) => x.conversion.oppToWon;
-export const salesCycle = (x: Inputs) => x.stageDays.leadToMql + x.stageDays.mqlToSql + x.stageDays.sqlToOpp + x.stageDays.oppToWon;
+/** The sales cycle as published benchmarks measure it: days from opportunity to a won deal. */
+export const salesCycle = (x: Inputs) => x.stageDays.oppToWon;
+/** Days from a new lead to a won deal: the four stage days added. Shown, not scored. */
+export const leadToCloseDays = (x: Inputs) => x.stageDays.leadToMql + x.stageDays.mqlToSql + x.stageDays.sqlToOpp + x.stageDays.oppToWon;
 export const ltvCac = (x: Inputs) => (x.cac > 0 ? x.ltv / x.cac : NaN);
 export const dealsPerRep = (x: Inputs) => x.leadsPerRep * leadToClose(x);
 export const opportunitiesPerRep = (x: Inputs) => x.leadsPerRep * x.conversion.leadToMql * x.conversion.mqlToSql * x.conversion.sqlToOpp;
@@ -167,7 +171,7 @@ export const averageAccuracy = (x: Inputs) => mean(closedQuarters(x).map((q) => 
 /** Positive means the forecast ran above the actual. */
 export const averageBias = (x: Inputs) => mean(closedQuarters(x).map((q) => q.bias));
 
-/** The value each scored metric is measured at. Bias is scored on its size, whichever direction it runs. */
+/** The value each scored metric is measured at. */
 export function metricValues(x: Inputs): Record<MetricId, number> {
   return {
     leadToMql: x.conversion.leadToMql,
@@ -175,7 +179,6 @@ export function metricValues(x: Inputs): Record<MetricId, number> {
     sqlToOpp: x.conversion.sqlToOpp,
     coverage: x.coverage,
     forecastAccuracy: averageAccuracy(x),
-    forecastBias: Math.abs(averageBias(x)),
     weightedPipelineAccuracy: x.weightedPipelineAccuracy,
     ltvCac: ltvCac(x),
     paybackMonths: x.paybackMonths,
@@ -183,7 +186,6 @@ export function metricValues(x: Inputs): Record<MetricId, number> {
     nrr: x.nrr,
     winRate: winRate(x),
     salesCycle: salesCycle(x),
-    leadsPerRep: x.leadsPerRep,
   };
 }
 
@@ -250,11 +252,9 @@ export const WEIGHT: Record<ModuleId, number> = Object.fromEntries(MODULES.map((
 export const overallScore = (pipeline: number, forecast: number, unitEconomics: number, funnel: number) =>
   Math.round(pipeline * WEIGHT.pipeline + forecast * WEIGHT.forecast + unitEconomics * WEIGHT.unitEconomics + funnel * WEIGHT.funnel);
 
-/** The stage furthest over its reference days, as a ratio of actual to reference. */
-export function slowestStage(x: Inputs): { key: StageKey; label: string; days: number; reference: number; ratio: number } {
-  return STAGES.map((s) => ({ key: s.key, label: s.label, days: x.stageDays[s.key], reference: STAGE_REFERENCE_DAYS[s.key], ratio: x.stageDays[s.key] / STAGE_REFERENCE_DAYS[s.key] })).reduce((a, b) =>
-    b.ratio > a.ratio ? b : a,
-  );
+/** The stage with the most days, for the funnel chart. */
+export function longestStage(x: Inputs): { key: StageKey; label: string; days: number } {
+  return STAGES.map((st) => ({ key: st.key, label: st.label, days: x.stageDays[st.key] })).reduce((a, b) => (b.days > a.days ? b : a));
 }
 
 /** The module ids from the lowest score to the highest. Ties keep the order of MODULES. */

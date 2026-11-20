@@ -2,7 +2,7 @@
 
 Read `README.md` first. It lists the rules the tests enforce.
 
-Before changing scores, weights, or ranges, update the pinned example scores in `src/lib/engine/engine.test.ts` and the worked examples in `src/lib/glossary/terms.ts` together. Run `npm test`, `npm run lint`, and `npm run build`; all three must pass.
+Before changing scores, weights, or ranges, update `src/lib/engine/sources.ts` with the source and how each end was set, then update the pinned example scores in `src/lib/engine/engine.test.ts` and the worked examples in `src/lib/glossary/terms.ts` together. Run `npm test`, `npm run lint`, and `npm run build`; all three must pass.
 
 User-facing copy follows the mongeon.co voice: no em dashes, no ellipses, no hedging, and none of the words the glossary test bans.
 

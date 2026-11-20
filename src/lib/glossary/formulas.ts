@@ -34,8 +34,8 @@ const list: Formula[] = [
     compute: (x) => x.leadToMql * x.mqlToSql * x.sqlToOpp * x.oppToWon,
   },
   {
-    id: "salesCycle",
-    name: "Sales cycle",
+    id: "leadToCloseDays",
+    name: "Lead-to-close days",
     vars: {
       leadToMql: { termId: "stageDays", format: "days" },
       mqlToSql: { termId: "stageDays", format: "days" },
@@ -43,7 +43,7 @@ const list: Formula[] = [
       oppToWon: { termId: "stageDays", format: "days" },
     },
     tokens: [v("leadToMql"), op("+"), v("mqlToSql"), op("+"), v("sqlToOpp"), op("+"), v("oppToWon")],
-    resultTermId: "salesCycle",
+    resultTermId: "leadToCloseDays",
     resultFormat: "days",
     compute: (x) => x.leadToMql + x.mqlToSql + x.sqlToOpp + x.oppToWon,
   },

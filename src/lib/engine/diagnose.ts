@@ -1,6 +1,6 @@
 import { fmt } from "../format";
 import { METRICS } from "./metrics";
-import { averageBias, closedQuarters, slowestStage, type Inputs, type MetricId, type ModuleResult } from "./model";
+import { averageBias, BENCHMARKS, closedQuarters, FORECAST_MISS_LINE, longestStage, type Inputs, type MetricId, type ModuleResult } from "./model";
 
 /** What to look at first when an input is the weakest in its check. Written to name the next step, not to grade. */
 function action(id: MetricId, x: Inputs): string {
@@ -13,11 +13,10 @@ function action(id: MetricId, x: Inputs): string {
       return "Look at discovery: how many accepted leads reach a real first meeting with a buyer.";
     case "coverage":
       return "Add qualified pipeline for the quarter, or plan now for a shortfall against quota.";
-    case "forecastAccuracy":
-      return "Inspect the forecast each week against stage-weighted pipeline, deal by deal.";
-    case "forecastBias": {
+    case "forecastAccuracy": {
       const b = averageBias(x);
       const q = closedQuarters(x);
+      if (!(Math.abs(b) > FORECAST_MISS_LINE / 2)) return "Inspect the forecast each week against stage-weighted pipeline, deal by deal.";
       const n = q.filter((r) => (b > 0 ? r.bias > 0 : r.bias < 0)).length;
       return b > 0
         ? `The forecast ran high in ${n} of ${q.length} closed quarters. Check rep commit discipline and the probability assigned to each stage.`
@@ -36,11 +35,10 @@ function action(id: MetricId, x: Inputs): string {
     case "winRate":
       return "Tighten qualification to the ideal customer profile and review the reasons on lost deals.";
     case "salesCycle": {
-      const s = slowestStage(x);
-      return `The slowest stage against its reference is ${s.label} at ${fmt(s.days, "days")} against ${fmt(s.reference, "days")}.`;
+      const l = longestStage(x);
+      const where = l.key === "oppToWon" ? "Look at where late-stage deals stall: legal, security review, or procurement." : `${l.label} is the longest stage, at ${fmt(l.days, "days")}.`;
+      return `Opportunities take ${fmt(x.stageDays.oppToWon, "days")} to close against a published median of ${fmt(BENCHMARKS.salesCycle.good, "days")}. ${where}`;
     }
-    case "leadsPerRep":
-      return "Reps may be short of leads. Check territory design and SDR capacity.";
   }
 }
 
